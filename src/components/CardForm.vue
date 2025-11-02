@@ -3,7 +3,19 @@
     <h3>{{ isEditing ? 'Edit Card' : 'Create New Card' }}</h3>
     
     <div class="form-group">
-      <label>Front</label>
+      <label>Card Type</label>
+      <select v-model="cardType" class="select">
+        <option value="default">Default (Flip Card)</option>
+        <option value="input">Input Answer</option>
+        <option value="multiple-choice">Multiple Choice</option>
+      </select>
+      <small class="hint" v-if="cardType === 'default'">Classic flashcard - flip to reveal answer</small>
+      <small class="hint" v-else-if="cardType === 'input'">Type the answer to check if correct</small>
+      <small class="hint" v-else>Select the correct answer from options</small>
+    </div>
+    
+    <div class="form-group">
+      <label>Front (Question)</label>
       <textarea
         v-model="frontContent"
         placeholder="Enter the question or front side (supports Markdown)"
@@ -14,14 +26,27 @@
     </div>
 
     <div class="form-group">
-      <label>Back</label>
+      <label>Back ({{ cardType === 'multiple-choice' ? 'Correct Answer' : 'Answer' }})</label>
       <textarea
         v-model="backContent"
-        placeholder="Enter the answer or back side (supports Markdown)"
+        :placeholder="cardType === 'multiple-choice' ? 'Enter the correct answer' : 'Enter the answer or back side (supports Markdown)'"
         class="textarea"
         rows="6"
       ></textarea>
       <small class="hint">Supports Markdown: **bold**, *italic*, `code`, etc.</small>
+    </div>
+
+    <div v-if="cardType === 'multiple-choice'" class="form-group">
+      <label>Wrong Answers (3 options)</label>
+      <input
+        v-for="(option, index) in wrongOptions"
+        :key="index"
+        v-model="wrongOptions[index]"
+        type="text"
+        :placeholder="`Wrong answer ${index + 1}`"
+        class="input"
+      />
+      <small class="hint">Provide 3 incorrect options for the multiple choice</small>
     </div>
 
     <div class="form-group">
@@ -65,6 +90,8 @@ const emit = defineEmits(['save', 'cancel'])
 
 const frontContent = ref('')
 const backContent = ref('')
+const cardType = ref('default')
+const wrongOptions = ref(['', '', ''])
 const imagePath = ref(null)
 const imagePreview = ref(null)
 const existingImagePath = ref(null)
@@ -86,6 +113,15 @@ onMounted(async () => {
   if (props.card) {
     frontContent.value = props.card.front
     backContent.value = props.card.back
+    cardType.value = props.card.metadata?.type || 'default'
+    
+    if (cardType.value === 'multiple-choice' && props.card.metadata?.options) {
+      wrongOptions.value = [...props.card.metadata.options]
+      while (wrongOptions.value.length < 3) {
+        wrongOptions.value.push('')
+      }
+    }
+    
     if (props.card.image) {
       existingImagePath.value = props.card.image
       try {
@@ -131,9 +167,27 @@ function save() {
     return
   }
 
+  if (cardType.value === 'multiple-choice') {
+    const filledOptions = wrongOptions.value.filter(opt => opt.trim())
+    if (filledOptions.length < 3) {
+      error.value = 'Please provide 3 wrong answers for multiple choice'
+      return
+    }
+  }
+
   const cardData = {
     front: frontContent.value.trim(),
-    back: backContent.value.trim()
+    back: backContent.value.trim(),
+    cardType: cardType.value,
+    metadata: {
+      type: cardType.value
+    }
+  }
+
+  if (cardType.value === 'multiple-choice') {
+    const filteredOptions = wrongOptions.value.filter(opt => opt.trim())
+    cardData.options = filteredOptions
+    cardData.metadata.options = filteredOptions
   }
 
   if (imagePath.value) {
@@ -182,6 +236,23 @@ function save() {
 }
 
 .textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.select,
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.select:focus,
+.input:focus {
   outline: none;
   border-color: #667eea;
 }

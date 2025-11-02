@@ -25,7 +25,7 @@ export async function getCard(deckPath, cardId) {
   return parseCardMarkdown(content, `${cardId}.md`)
 }
 
-export async function createCard(deckPath, front, back, imagePath = null) {
+export async function createCard(deckPath, front, back, imagePath = null, cardType = 'default', options = null) {
   const cards = await listCards(deckPath)
   const nextId = String(cards.length + 1).padStart(3, '0')
   
@@ -33,7 +33,12 @@ export async function createCard(deckPath, front, back, imagePath = null) {
     id: nextId,
     created: new Date().toISOString(),
     tags: [],
-    difficulty: 'medium'
+    difficulty: 'medium',
+    type: cardType || 'default'
+  }
+  
+  if (cardType === 'multiple-choice' && options && Array.isArray(options)) {
+    metadata.options = options
   }
   
   let imageMarkdown = ''
@@ -64,6 +69,10 @@ export async function updateCard(deckPath, cardId, updates) {
   const updatedMetadata = {
     ...card.metadata,
     ...updates.metadata
+  }
+  
+  if (updates.metadata?.type && updates.metadata.type !== 'multiple-choice') {
+    delete updatedMetadata.options
   }
   
   const front = updates.front !== undefined ? updates.front : card.front
@@ -191,9 +200,14 @@ function generateCardMarkdown(metadata, front, back, imageMarkdown = '') {
     `created: ${metadata.created}`,
     `tags: ${JSON.stringify(metadata.tags || [])}`,
     `difficulty: ${metadata.difficulty || 'medium'}`,
-    '---',
-    ''
+    `type: ${metadata.type || 'default'}`
   ]
+  
+  if (metadata.options && Array.isArray(metadata.options)) {
+    metadataLines.push(`options: ${JSON.stringify(metadata.options)}`)
+  }
+  
+  metadataLines.push('---', '')
   
   const content = [
     ...metadataLines,

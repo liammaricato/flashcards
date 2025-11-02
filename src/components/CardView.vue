@@ -53,6 +53,9 @@
         :key="card.id"
         class="card-item"
       >
+        <div class="card-type-badge" :class="`type-${card.metadata?.type || 'default'}`">
+          {{ getCardTypeLabel(card.metadata?.type) }}
+        </div>
         <div class="card-content">
           <div class="card-side">
             <label>Front:</label>
@@ -128,7 +131,9 @@ async function handleCreateCard(cardData) {
       props.deck.path,
       cardData.front,
       cardData.back,
-      cardData.imagePath
+      cardData.imagePath,
+      cardData.cardType || 'default',
+      cardData.options || null
     )
     await loadCards()
     showCreateForm.value = false
@@ -179,6 +184,15 @@ async function deleteCardPrompt(card) {
 
 function renderMarkdown(content) {
   return marked(content)
+}
+
+function getCardTypeLabel(type) {
+  const labels = {
+    'default': '📇 Flip Card',
+    'input': '✍️ Input',
+    'multiple-choice': '☑️ Multiple Choice'
+  }
+  return labels[type] || labels['default']
 }
 </script>
 
@@ -320,6 +334,29 @@ function renderMarkdown(content) {
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.card-type-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.card-type-badge.type-input {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.card-type-badge.type-multiple-choice {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .card-content {

@@ -67,9 +67,9 @@ export function registerIpcHandlers() {
     }
   })
 
-  ipcMain.handle('card:create', async (event, deckPath, front, back, imagePath) => {
+  ipcMain.handle('card:create', async (event, deckPath, front, back, imagePath, cardType, options) => {
     try {
-      return await cardManager.createCard(deckPath, front, back, imagePath)
+      return await cardManager.createCard(deckPath, front, back, imagePath, cardType, options)
     } catch (error) {
       throw new Error(`Failed to create card: ${error.message}`)
     }

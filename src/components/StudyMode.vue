@@ -18,52 +18,40 @@
     </div>
 
     <div v-if="!completed" class="study-area">
-      <div class="card-container" @click="flipCard">
-        <div class="flashcard" :class="{ flipped: isFlipped }">
-          <div class="flashcard-front">
-            <div class="card-header">
-              <div class="card-label">FRONT</div>
-              <button 
-                @click.stop="speakText(currentCard.front)" 
-                class="tts-button"
-                :class="{ speaking: isSpeaking }"
-                title="Listen to text"
-              >
-                🔊
-              </button>
-            </div>
-            <div class="card-content" v-html="renderMarkdown(currentCard.front)"></div>
-            <div class="flip-hint">Click to flip</div>
-          </div>
-          <div class="flashcard-back">
-            <div class="card-header">
-              <div class="card-label">BACK</div>
-              <button 
-                @click.stop="speakText(currentCard.back)" 
-                class="tts-button"
-                :class="{ speaking: isSpeaking }"
-                title="Listen to text"
-              >
-                🔊
-              </button>
-            </div>
-            <div class="card-content" v-html="renderMarkdown(currentCard.back)"></div>
-            <img v-if="currentImageData" :src="currentImageData" class="card-image" />
-          </div>
-        </div>
-      </div>
-
-      <div v-if="isFlipped" class="answer-buttons">
-        <button @click="markForgot" class="btn-forgot">
-          ✗ Forgot
-        </button>
-        <button @click="markRemembered" class="btn-remembered">
-          ✓ Remembered
-        </button>
-      </div>
-      <div v-else class="flip-instruction">
-        <p>Click the card to see the answer</p>
-      </div>
+      <DefaultCard
+        v-if="cardType === 'default'"
+        :front="currentCard.front"
+        :back="currentCard.back"
+        :imageData="currentImageData"
+        :isFlipped="isFlipped"
+        :isSpeaking="isSpeaking"
+        @flip="flipCard"
+        @answer="handleAnswer"
+        @speak="speakText"
+      />
+      
+      <InputCard
+        v-else-if="cardType === 'input'"
+        :front="currentCard.front"
+        :back="currentCard.back"
+        :imageData="currentImageData"
+        :isSpeaking="isSpeaking"
+        @answer="handleAnswer"
+        @next="nextCard"
+        @speak="speakText"
+      />
+      
+      <MultipleChoiceCard
+        v-else-if="cardType === 'multiple-choice'"
+        :front="currentCard.front"
+        :back="currentCard.back"
+        :options="currentCard.metadata.options || []"
+        :imageData="currentImageData"
+        :isSpeaking="isSpeaking"
+        @answer="handleAnswer"
+        @next="nextCard"
+        @speak="speakText"
+      />
     </div>
 
     <div v-else class="study-complete">
@@ -95,6 +83,9 @@
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { marked } from 'marked'
 import { useSpeech } from '../composables/useSpeech'
+import DefaultCard from './cards/DefaultCard.vue'
+import InputCard from './cards/InputCard.vue'
+import MultipleChoiceCard from './cards/MultipleChoiceCard.vue'
 
 const props = defineProps({
   deck: {
@@ -119,6 +110,8 @@ const completed = ref(false)
 const imageDataMap = ref({})
 
 const currentCard = computed(() => props.cards[currentIndex.value])
+
+const cardType = computed(() => currentCard.value?.metadata?.type || 'default')
 
 const currentImageData = computed(() => {
   return imageDataMap.value[currentCard.value?.id] || null
@@ -174,14 +167,16 @@ function flipCard() {
   isFlipped.value = !isFlipped.value
 }
 
-function markRemembered() {
-  remembered.value++
-  nextCard()
-}
-
-function markForgot() {
-  forgot.value++
-  nextCard()
+function handleAnswer(isCorrect) {
+  if (isCorrect) {
+    remembered.value++
+  } else {
+    forgot.value++
+  }
+  
+  if (cardType.value === 'default') {
+    nextCard()
+  }
 }
 
 function nextCard() {

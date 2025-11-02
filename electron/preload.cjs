@@ -12,7 +12,7 @@ contextBridge.exposeInMainWorld('deckAPI', {
 contextBridge.exposeInMainWorld('cardAPI', {
   listCards: (deckPath) => ipcRenderer.invoke('card:list', deckPath),
   getCard: (deckPath, cardId) => ipcRenderer.invoke('card:get', deckPath, cardId),
-  createCard: (deckPath, front, back, imagePath) => ipcRenderer.invoke('card:create', deckPath, front, back, imagePath),
+  createCard: (deckPath, front, back, imagePath, cardType, options) => ipcRenderer.invoke('card:create', deckPath, front, back, imagePath, cardType, options),
   updateCard: (deckPath, cardId, updates) => ipcRenderer.invoke('card:update', deckPath, cardId, updates),
   deleteCard: (deckPath, cardId) => ipcRenderer.invoke('card:delete', deckPath, cardId),
   updateCardMarkdown: (deckPath, cardId, markdown) => ipcRenderer.invoke('card:updateMarkdown', deckPath, cardId, markdown),
