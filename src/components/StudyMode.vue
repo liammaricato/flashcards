@@ -21,12 +21,32 @@
       <div class="card-container" @click="flipCard">
         <div class="flashcard" :class="{ flipped: isFlipped }">
           <div class="flashcard-front">
-            <div class="card-label">FRONT</div>
+            <div class="card-header">
+              <div class="card-label">FRONT</div>
+              <button 
+                @click.stop="speakText(currentCard.front)" 
+                class="tts-button"
+                :class="{ speaking: isSpeaking }"
+                title="Listen to text"
+              >
+                🔊
+              </button>
+            </div>
             <div class="card-content" v-html="renderMarkdown(currentCard.front)"></div>
             <div class="flip-hint">Click to flip</div>
           </div>
           <div class="flashcard-back">
-            <div class="card-label">BACK</div>
+            <div class="card-header">
+              <div class="card-label">BACK</div>
+              <button 
+                @click.stop="speakText(currentCard.back)" 
+                class="tts-button"
+                :class="{ speaking: isSpeaking }"
+                title="Listen to text"
+              >
+                🔊
+              </button>
+            </div>
             <div class="card-content" v-html="renderMarkdown(currentCard.back)"></div>
             <img v-if="currentImageData" :src="currentImageData" class="card-image" />
           </div>
@@ -72,8 +92,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { marked } from 'marked'
+import { useSpeech } from '../composables/useSpeech'
 
 const props = defineProps({
   deck: {
@@ -87,6 +108,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['exit'])
+
+const { speak, stop, isSpeaking } = useSpeech()
 
 const currentIndex = ref(0)
 const isFlipped = ref(false)
@@ -113,6 +136,14 @@ const accuracy = computed(() => {
 
 onMounted(async () => {
   await loadImages()
+  
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.getVoices()
+    window.speechSynthesis.onvoiceschanged = () => {
+      const voices = window.speechSynthesis.getVoices()
+      console.log('Available voices loaded:', voices.length)
+    }
+  }
 })
 
 watch(() => currentCard.value, async () => {
@@ -183,6 +214,18 @@ function restartStudy() {
 function renderMarkdown(content) {
   return marked(content)
 }
+
+function speakText(text) {
+  speak(text, {
+    rate: 1.0,
+    pitch: 1.0,
+    volume: 1.0
+  })
+}
+
+onUnmounted(() => {
+  stop()
+})
 </script>
 
 <style scoped>
@@ -324,13 +367,53 @@ function renderMarkdown(content) {
   transform: rotateY(180deg);
 }
 
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
 .card-label {
   font-size: 0.75rem;
   font-weight: 700;
   color: #667eea;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 1rem;
+}
+
+.tts-button {
+  background: #f0f0f0;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.tts-button:hover {
+  background: #667eea;
+  transform: scale(1.1);
+}
+
+.tts-button.speaking {
+  background: #667eea;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 .card-content {
