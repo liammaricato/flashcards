@@ -2,9 +2,15 @@
   <div class="deck-list">
     <div class="deck-list-header">
       <h2>Your Decks</h2>
-      <button @click="showCreateForm = true" class="btn-primary">
-        + New Deck
-      </button>
+      <div class="deck-list-actions">
+        <button @click="openDecksFolder" class="btn-secondary">
+          <span class="icon" aria-hidden="true">📂</span>
+          Open Folder
+        </button>
+        <button @click="showCreateForm = true" class="btn-primary">
+          + New Deck
+        </button>
+      </div>
     </div>
 
     <div v-if="showCreateForm" class="create-form">
@@ -79,6 +85,14 @@ onMounted(async () => {
   await loadDecks()
   await loadDecksDirectory()
 })
+
+async function openDecksFolder() {
+  try {
+    await window.deckAPI.openDecksDirectory()
+  } catch (err) {
+    console.error('Failed to open decks directory:', err)
+  }
+}
 
 async function loadDecks() {
   try {
@@ -160,6 +174,11 @@ function formatDate(dateString) {
   margin-bottom: 2rem;
 }
 
+.deck-list-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .deck-list-header h2 {
   margin: 0;
   font-size: 2rem;
@@ -211,10 +230,6 @@ function formatDate(dateString) {
   transition: transform 0.2s;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-}
-
 .btn-secondary {
   padding: 0.75rem 1.5rem;
   background: #f5f5f5;
@@ -223,6 +238,12 @@ function formatDate(dateString) {
   border-radius: 4px;
   font-size: 1rem;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.btn-primary:hover, .btn-secondary:hover {
+  transform: translateY(-2px);
 }
 
 .btn-small {

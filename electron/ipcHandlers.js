@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { ipcMain, shell } from 'electron'
 import * as deckManager from './modules/deckManager.js'
 import * as cardManager from './modules/cardManager.js'
 
@@ -116,6 +116,16 @@ export function registerIpcHandlers() {
       return `data:${mimeType};base64,${base64}`
     } catch (error) {
       throw new Error(`Failed to load image: ${error.message}`)
+    }
+  })
+
+  ipcMain.handle('deck:openDirectory', async () => {
+    try {
+      const dir = await deckManager.getDecksDirectory()
+      await shell.openPath(dir)
+      return { success: true }
+    } catch (error) {
+      throw new Error(`Failed to open decks directory: ${error.message}`)
     }
   })
 }

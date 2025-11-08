@@ -17,8 +17,18 @@
     "vue",
     "study"
   ],
-  "author": "",
+  "author": "Suricatoo",
   "license": "MIT",
+  "build": {
+    "appId": "com.suricatoo.flashcards",
+    "productName": "Flashcards",
+    "icon": "icon.ico",
+    "files": [
+      "dist/**",
+      "electron/**",
+      "package.json"
+    ]
+  },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",
     "concurrently": "^8.2.2",

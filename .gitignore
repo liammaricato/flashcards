@@ -8,3 +8,5 @@ dist-electron
 .vscode
 .idea
 
+*.psd
+flashcards

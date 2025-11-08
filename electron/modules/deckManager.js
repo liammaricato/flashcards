@@ -2,7 +2,9 @@ import fs from 'fs/promises'
 import path from 'path'
 import { app } from 'electron'
 
-const DECKS_DIR = path.join(app.getPath('documents'), 'Flashcards')
+const DECKS_DIR = app.isPackaged
+  ? path.join(app.getPath('userData'), 'Flashcards')
+  : path.join(app.getAppPath(), 'flashcards')
 
 async function ensureDecksDirectory() {
   try {

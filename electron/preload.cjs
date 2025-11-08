@@ -6,7 +6,8 @@ contextBridge.exposeInMainWorld('deckAPI', {
   createDeck: (name, description) => ipcRenderer.invoke('deck:create', name, description),
   getDeck: (folderName) => ipcRenderer.invoke('deck:get', folderName),
   updateDeck: (folderName, updates) => ipcRenderer.invoke('deck:update', folderName, updates),
-  deleteDeck: (folderName) => ipcRenderer.invoke('deck:delete', folderName)
+  deleteDeck: (folderName) => ipcRenderer.invoke('deck:delete', folderName),
+  openDecksDirectory: () => ipcRenderer.invoke('deck:openDirectory')
 })
 
 contextBridge.exposeInMainWorld('cardAPI', {
