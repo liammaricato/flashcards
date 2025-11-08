@@ -8,6 +8,7 @@
       <DeckList 
         v-if="currentView === 'list'" 
         @open-deck="openDeck" 
+        @quick-play="startQuickPlay"
       />
       <CardView 
         v-else-if="currentView === 'cards'" 
@@ -59,6 +60,54 @@ async function startStudy() {
     console.error('Failed to load cards for study:', err)
     alert('Failed to load cards for study')
   }
+}
+
+function startQuickPlay(options) {
+  const deck = createQuickPlayDeck(options)
+  const cards = createQuickPlayCards(options)
+  currentDeck.value = deck
+  studyCards.value = shuffleArray(cards)
+  currentView.value = 'study'
+}
+
+function createQuickPlayDeck(options) {
+  const now = new Date().toISOString()
+  const subjectName = options.subject === 'numbers' ? 'Numbers' : 'Quick'
+  return {
+    id: `qp-deck-${Date.now()}`,
+    name: `Quick Play: ${subjectName}`,
+    description: 'Quick Play session (not saved)',
+    created: now,
+    modified: now,
+    cardCount: options.numCards,
+    tags: ['quick-play', options.subject],
+    path: 'memory://quick-play',
+    folderName: 'quick-play'
+  }
+}
+
+function createQuickPlayCards(options) {
+  const now = new Date().toISOString()
+  const count = Math.max(1, Number(options.numCards) || 1)
+  const type = options.cardType || 'input'
+  const cards = []
+  for (let i = 1; i <= count; i++) {
+    cards.push({
+      id: `qp-card-${i}-${Date.now()}`,
+      front: `Mock question ${i}`,
+      back: `Mock answer ${i}`,
+      image: null,
+      metadata: {
+        id: `qp-meta-${i}`,
+        created: now,
+        tags: ['quick-play'],
+        difficulty: 'normal',
+        type
+      },
+      fileName: ''
+    })
+  }
+  return cards
 }
 
 function exitStudy() {

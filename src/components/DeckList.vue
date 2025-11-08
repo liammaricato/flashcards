@@ -3,6 +3,10 @@
     <div class="deck-list-header">
       <h2>Your Decks</h2>
       <div class="deck-list-actions">
+        <button @click="showQuickPlay = true" class="btn-secondary">
+          <span class="icon" aria-hidden="true">⚡</span>
+          Quick Play
+        </button>
         <button @click="openDecksFolder" class="btn-secondary">
           <span class="icon" aria-hidden="true">📂</span>
           Open Folder
@@ -10,6 +14,41 @@
         <button @click="showCreateForm = true" class="btn-primary">
           + New Deck
         </button>
+      </div>
+    </div>
+
+    <div v-if="showQuickPlay" class="quickplay-modal">
+      <div class="modal-overlay" @click="cancelQuickPlay"></div>
+      <div class="modal-content">
+        <h3>Quick Play</h3>
+        <div class="modal-row">
+          <label class="label">Subject</label>
+          <select v-model="qpSubject" class="input">
+            <option value="numbers">Numbers</option>
+          </select>
+        </div>
+        <div class="modal-row">
+          <label class="label">Card Type</label>
+          <select v-model="qpCardType" class="input">
+            <option value="input">Input</option>
+          </select>
+        </div>
+        <div class="modal-row">
+          <label class="label">Number of Cards</label>
+          <input
+            v-model.number="qpNumCards"
+            type="number"
+            min="1"
+            step="1"
+            class="input"
+            placeholder="10"
+          />
+        </div>
+        <div class="form-actions">
+          <button @click="confirmQuickPlay" class="btn-primary">Start</button>
+          <button @click="cancelQuickPlay" class="btn-secondary">Cancel</button>
+        </div>
+        <p v-if="qpError" class="error">{{ qpError }}</p>
       </div>
     </div>
 
@@ -71,15 +110,21 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-const emit = defineEmits(['open-deck'])
+const emit = defineEmits(['open-deck', 'quick-play'])
 
 const decks = ref([])
 const loading = ref(true)
 const showCreateForm = ref(false)
+const showQuickPlay = ref(false)
 const newDeckName = ref('')
 const newDeckDescription = ref('')
 const error = ref('')
 const decksDirectory = ref('')
+
+const qpSubject = ref('numbers')
+const qpCardType = ref('input')
+const qpNumCards = ref(10)
+const qpError = ref('')
 
 onMounted(async () => {
   await loadDecks()
@@ -157,6 +202,26 @@ async function deleteDeckPrompt(deck) {
 function formatDate(dateString) {
   const date = new Date(dateString)
   return date.toLocaleDateString()
+}
+
+function cancelQuickPlay() {
+  showQuickPlay.value = false
+  qpError.value = ''
+}
+
+function confirmQuickPlay() {
+  if (!qpNumCards.value || qpNumCards.value < 1) {
+    qpError.value = 'Enter a valid number of cards'
+    return
+  }
+  qpError.value = ''
+  const options = {
+    subject: qpSubject.value,
+    cardType: qpCardType.value,
+    numCards: qpNumCards.value
+  }
+  showQuickPlay.value = false
+  emit('quick-play', options)
 }
 </script>
 
@@ -320,6 +385,44 @@ function formatDate(dateString) {
 .error {
   color: #e74c3c;
   margin: 1rem 0 0 0;
+}
+
+.quickplay-modal .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.quickplay-modal .modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  width: 420px;
+  max-width: 90vw;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.quickplay-modal h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.quickplay-modal .label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-weight: 600;
+}
+
+.quickplay-modal .modal-row {
+  margin-bottom: 1rem;
 }
 </style>
 
