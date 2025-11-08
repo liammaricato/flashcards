@@ -115,18 +115,26 @@ export async function updateCardFromMarkdown(deckPath, cardId, markdownContent) 
 }
 
 function parseCardMarkdown(content, fileName) {
-  const lines = content.split('\n')
+  const normalizedContent = content.replace(/^\uFEFF/, '')
+  const lines = normalizedContent.split('\n')
   const metadata = {}
   let frontContent = []
   let backContent = []
   let currentSection = null
   let inMetadata = false
+  let allowMetadataStart = true
+
+  const isDelimiter = (s) => {
+    const cleaned = s.replace(/\uFEFF/g, '').replace(/\u200B/g, '').trim()
+    return /^-{3,}$/.test(cleaned)
+  }
   
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
+    let line = lines[i].replace(/\uFEFF/g, '')
+    const trimmed = line.trim()
     
-    if (line.trim() === '---') {
-      if (!inMetadata && i === 0) {
+    if (isDelimiter(trimmed)) {
+      if (!inMetadata && allowMetadataStart) {
         inMetadata = true
         continue
       } else if (inMetadata) {
@@ -136,9 +144,9 @@ function parseCardMarkdown(content, fileName) {
     }
     
     if (inMetadata) {
-      const match = line.match(/^(\w+):\s*(.+)$/)
+      const match = trimmed.match(/^([\w-]+):\s*(.*)$/)
       if (match) {
-        const key = match[1]
+        const key = match[1].toLowerCase()
         let value = match[2].trim()
         
         if (value.startsWith('[') && value.endsWith(']')) {
@@ -153,13 +161,17 @@ function parseCardMarkdown(content, fileName) {
       }
       continue
     }
+
+    if (!inMetadata && trimmed !== '') {
+      allowMetadataStart = false
+    }
     
-    if (line.trim() === '# Front') {
+    if (trimmed === '# Front') {
       currentSection = 'front'
       continue
     }
     
-    if (line.trim() === '# Back') {
+    if (trimmed === '# Back') {
       currentSection = 'back'
       continue
     }
@@ -168,6 +180,29 @@ function parseCardMarkdown(content, fileName) {
       frontContent.push(line)
     } else if (currentSection === 'back') {
       backContent.push(line)
+    }
+  }
+
+  if (Object.keys(metadata).length === 0) {
+    for (let i = 0; i < lines.length; i++) {
+      const trimmed = lines[i].replace(/\uFEFF/g, '').trim()
+      if (trimmed === '# Front' || trimmed === '# Back') break
+      if (isDelimiter(trimmed) || trimmed === '') continue
+      const match = trimmed.match(/^([\w-]+):\s*(.*)$/)
+      if (match) {
+        const key = match[1].toLowerCase()
+        let value = match[2].trim()
+        if (value.startsWith('[') && value.endsWith(']')) {
+          try {
+            value = JSON.parse(value)
+          } catch {
+            value = []
+          }
+        }
+        if (!(key in metadata)) {
+          metadata[key] = value
+        }
+      }
     }
   }
   
@@ -182,13 +217,22 @@ function parseCardMarkdown(content, fileName) {
   }
   
   const cardId = path.basename(fileName, '.md')
+
+  const normalizedMetadata = { ...metadata }
+  normalizedMetadata.id = normalizedMetadata.id || cardId
+  normalizedMetadata.created = normalizedMetadata.created || new Date().toISOString()
+  if (typeof normalizedMetadata.type === 'string' && normalizedMetadata.type.trim()) {
+    normalizedMetadata.type = normalizedMetadata.type.trim().toLowerCase()
+  } else {
+    normalizedMetadata.type = 'default'
+  }
   
   return {
     id: cardId,
     front,
     back,
     image,
-    metadata,
+    metadata: normalizedMetadata,
     fileName
   }
 }
