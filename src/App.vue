@@ -31,8 +31,10 @@ import { ref } from 'vue'
 import DeckList from './components/DeckList.vue'
 import CardView from './components/CardView.vue'
 import StudyMode from './components/StudyMode.vue'
+import { createQuickPlaySession } from './services/quickPlay.js'
 
 const currentDeck = ref(null)
+const inQuickPlay = ref(false)
 const studyCards = ref([])
 const currentView = ref('list')
 
@@ -63,55 +65,21 @@ async function startStudy() {
 }
 
 function startQuickPlay(options) {
-  const deck = createQuickPlayDeck(options)
-  const cards = createQuickPlayCards(options)
+  const { deck, cards } = createQuickPlaySession(options)
+  inQuickPlay.value = true
   currentDeck.value = deck
   studyCards.value = shuffleArray(cards)
   currentView.value = 'study'
 }
 
-function createQuickPlayDeck(options) {
-  const now = new Date().toISOString()
-  const subjectName = options.subject === 'numbers' ? 'Numbers' : 'Quick'
-  return {
-    id: `qp-deck-${Date.now()}`,
-    name: `Quick Play: ${subjectName}`,
-    description: 'Quick Play session (not saved)',
-    created: now,
-    modified: now,
-    cardCount: options.numCards,
-    tags: ['quick-play', options.subject],
-    path: 'memory://quick-play',
-    folderName: 'quick-play'
-  }
-}
-
-function createQuickPlayCards(options) {
-  const now = new Date().toISOString()
-  const count = Math.max(1, Number(options.numCards) || 1)
-  const type = options.cardType || 'input'
-  const cards = []
-  for (let i = 1; i <= count; i++) {
-    cards.push({
-      id: `qp-card-${i}-${Date.now()}`,
-      front: `Mock question ${i}`,
-      back: `Mock answer ${i}`,
-      image: null,
-      metadata: {
-        id: `qp-meta-${i}`,
-        created: now,
-        tags: ['quick-play'],
-        difficulty: 'normal',
-        type
-      },
-      fileName: ''
-    })
-  }
-  return cards
-}
-
 function exitStudy() {
-  currentView.value = 'cards'
+  if (inQuickPlay.value) {
+    currentDeck.value = null
+    currentView.value = 'list'
+    inQuickPlay.value = false
+  } else {
+    currentView.value = 'cards'
+  }
   studyCards.value = []
 }
 

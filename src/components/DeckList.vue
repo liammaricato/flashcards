@@ -24,12 +24,14 @@
         <div class="modal-row">
           <label class="label">Subject</label>
           <select v-model="qpSubject" class="input">
-            <option value="numbers">Numbers</option>
+            <option value="numbers-to-sino-korean">Numbers to Sino-Korean</option>
+            <option value="sino-korean-to-numbers">Sino-Korean to Numbers</option>
           </select>
         </div>
         <div class="modal-row">
           <label class="label">Card Type</label>
           <select v-model="qpCardType" class="input">
+            <option value="default">Default</option>
             <option value="input">Input</option>
           </select>
         </div>
@@ -121,7 +123,7 @@ const newDeckDescription = ref('')
 const error = ref('')
 const decksDirectory = ref('')
 
-const qpSubject = ref('numbers')
+const qpSubject = ref('numbers-to-sino-korean')
 const qpCardType = ref('input')
 const qpNumCards = ref(10)
 const qpError = ref('')
