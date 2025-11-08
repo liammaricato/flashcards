@@ -14,6 +14,7 @@
           </button>
         </div>
         <div class="card-content" v-html="renderMarkdown(front)"></div>
+        <img v-if="imageData" :src="imageData" class="card-image" />
         
         <div class="options-grid">
           <button
@@ -250,6 +251,16 @@ function selectOption(option) {
 .btn-next:hover {
   background: #22c55e;
   transform: translateY(-2px);
+}
+
+.card-image {
+  max-width: 100%;
+  max-height: 150px;
+  margin-top: 1rem;
+  border-radius: 8px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 </style>
 

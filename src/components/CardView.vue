@@ -60,11 +60,11 @@
           <div class="card-side">
             <label>Front:</label>
             <div class="markdown-content" v-html="renderMarkdown(card.front)"></div>
+            <img v-if="imageDataMap[card.id]" :src="imageDataMap[card.id]" class="card-image" />
           </div>
           <div class="card-side">
             <label>Back:</label>
             <div class="markdown-content" v-html="renderMarkdown(card.back)"></div>
-            <img v-if="imageDataMap[card.id]" :src="imageDataMap[card.id]" class="card-image" />
           </div>
         </div>
         <div class="card-actions">
@@ -414,6 +414,9 @@ function getCardTypeLabel(type) {
   max-width: 100%;
   margin-top: 1rem;
   border-radius: 4px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .card-actions {

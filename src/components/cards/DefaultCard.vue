@@ -15,6 +15,7 @@
             </button>
           </div>
           <div class="card-content" v-html="renderMarkdown(front)"></div>
+          <img v-if="imageData" :src="imageData" class="card-image" />
           <div class="flip-hint">Click to flip</div>
         </div>
         <div class="flashcard-back">
@@ -30,7 +31,6 @@
             </button>
           </div>
           <div class="card-content" v-html="renderMarkdown(back)"></div>
-          <img v-if="imageData" :src="imageData" class="card-image" />
         </div>
       </div>
     </div>
@@ -70,6 +70,8 @@ function renderMarkdown(content) {
 <style scoped>
 .default-card {
   display: flex;
+  width: 100%;
+  max-width: 600px;
   flex-direction: column;
   align-items: center;
   gap: 2rem;
@@ -78,7 +80,6 @@ function renderMarkdown(content) {
 .card-container {
   perspective: 1000px;
   width: 100%;
-  max-width: 600px;
   height: 400px;
 }
 
@@ -195,6 +196,9 @@ function renderMarkdown(content) {
   margin-top: 1rem;
   border-radius: 8px;
   object-fit: contain;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .flip-hint {

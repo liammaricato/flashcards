@@ -13,8 +13,11 @@
             🔊
           </button>
         </div>
+
         <div class="card-content" v-html="renderMarkdown(front)"></div>
-        
+
+        <img v-if="imageData" :src="imageData" class="card-image" />
+
         <div class="input-section">
           <input
             v-model="userAnswer"
@@ -29,10 +32,9 @@
     </div>
 
     <div v-if="answered" class="result-section">
-      <div class="correct-answer">
+      <div class="correct-answer" :class="{ correct: isCorrectAnswer }">
         <strong>Correct Answer:</strong>
         <div v-html="renderMarkdown(back)"></div>
-        <img v-if="imageData" :src="imageData" class="card-image" />
       </div>
       <div class="answer-buttons">
         <button @click="$emit('next')" class="btn-next">
@@ -63,6 +65,7 @@ const emit = defineEmits(['answer', 'next', 'speak'])
 
 const userAnswer = ref('')
 const answered = ref(false)
+const isCorrectAnswer = ref(false)
 
 watch(() => [props.front, props.back], () => {
   userAnswer.value = ''
@@ -80,10 +83,11 @@ function checkAnswer() {
   const userText = userAnswer.value.trim().toLowerCase()
   const correctText = props.back.trim().toLowerCase()
   
-  const isCorrect = userText === correctText || 
-                    correctText.includes(userText) ||
-                    userText.includes(correctText)
+  const isCorrect = userText === correctText
+  // In case we want to check for partial matches
+    // || correctText.includes(userText) || userText.includes(correctText)
   
+  isCorrectAnswer.value = isCorrect
   emit('answer', isCorrect)
 }
 </script>
@@ -194,6 +198,7 @@ function checkAnswer() {
   padding: 1.5rem;
   border-radius: 12px;
   margin-bottom: 1rem;
+  border: 4px solid #ef4444;
 }
 
 .correct-answer strong {
@@ -202,11 +207,18 @@ function checkAnswer() {
   margin-bottom: 0.5rem;
 }
 
+.correct-answer.correct {
+  border-color: #22c55e;
+}
+
 .card-image {
   max-width: 100%;
   max-height: 150px;
   margin-top: 1rem;
   border-radius: 8px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .submit-section,
