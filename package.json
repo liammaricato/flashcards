@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "marked": "^11.0.0",
+    "sino-korean-js": "^0.1.1",
     "vue": "^3.4.15"
   }
 }
-
