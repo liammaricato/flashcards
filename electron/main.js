@@ -10,8 +10,8 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
 function createWindow() {
   const iconPath = app.isPackaged
-    ? path.join(process.resourcesPath, 'icon.ico')
-    : path.join(__dirname, '../build/icon.ico')
+    ? path.join(process.resourcesPath, 'favicon.ico')
+    : path.join(__dirname, '../build/favicon.ico')
 
   const mainWindow = new BrowserWindow({
     width: 1200,

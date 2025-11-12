@@ -22,7 +22,7 @@
   "build": {
     "appId": "com.suricatoo.flashcards",
     "productName": "Flashcards",
-    "icon": "icon.ico",
+    "win": { "icon": "build/favicon.ico", "target": "nsis" },
     "files": [
       "dist/**",
       "electron/**",
