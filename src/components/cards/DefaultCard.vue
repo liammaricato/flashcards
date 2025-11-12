@@ -172,6 +172,7 @@ function renderMarkdown(content) {
 .card-content {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;

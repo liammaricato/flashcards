@@ -10,6 +10,7 @@
         v-if="currentView === 'list'" 
         @open-deck="openDeck" 
         @quick-play="startQuickPlay"
+        @study-deck="startStudyForDeck"
       />
       <CardView 
         v-else-if="currentView === 'cards'" 
@@ -60,6 +61,22 @@ async function startStudy() {
       alert('No cards to study!')
       return
     }
+    studyCards.value = shuffleArray([...cards])
+    currentView.value = 'study'
+  } catch (err) {
+    console.error('Failed to load cards for study:', err)
+    alert('Failed to load cards for study')
+  }
+}
+
+async function startStudyForDeck(deck) {
+  try {
+    const cards = await window.cardAPI.listCards(deck.path)
+    if (cards.length === 0) {
+      alert('No cards to study!')
+      return
+    }
+    currentDeck.value = deck
     studyCards.value = shuffleArray([...cards])
     currentView.value = 'study'
   } catch (err) {
@@ -145,6 +162,7 @@ header p {
   border: 1px solid #e5e7eb;
   box-shadow: 0 4px 10px rgba(0,0,0,0.12);
   cursor: pointer;
+  z-index: 1000;
 }
 .settings-btn:hover {
   background: #ffffff;

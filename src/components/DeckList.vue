@@ -35,11 +35,12 @@
         <h3>Generate with AI</h3>
         <div class="modal-row">
           <label class="label">Instructions</label>
+          <small class="hint">Instructions on how the deck should be generated, try to mention what should be displayed in the front and back of the cards, and what languages to be used.</small>
           <textarea
             v-model="aiInstructions"
             class="input"
             rows="4"
-            placeholder="e.g., Create flashcards to learn the basics of photosynthesis for high school level"
+            placeholder="e.g., Create flashcards to practice food names in Korean, each card should have the front as a food name in Korean and the back as the English translation."
           ></textarea>
         </div>
         <div class="modal-row">
@@ -171,6 +172,7 @@
           </div>
         </div>
         <div class="deck-actions">
+          <button @click="emit('study-deck', deck)" class="btn-small btn-study" :disabled="deck.cardCount === 0" :title="deck.cardCount === 0 ? 'No cards to study' : 'Start studying'">Study</button>
           <button @click="openDeck(deck)" class="btn-small">Open</button>
           <button @click="deleteDeckPrompt(deck)" class="btn-small btn-danger">Delete</button>
         </div>
@@ -186,7 +188,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-const emit = defineEmits(['open-deck', 'quick-play'])
+const emit = defineEmits(['open-deck', 'quick-play', 'study-deck'])
 
 const decks = ref([])
 const loading = ref(true)
@@ -455,7 +457,7 @@ async function confirmAIGen() {
   transition: transform 0.2s;
 }
 
-.btn-primary:hover, .btn-secondary:hover {
+.btn-primary:hover, .btn-secondary:hover, .btn-small:hover {
   transform: translateY(-2px);
 }
 
@@ -467,10 +469,15 @@ async function confirmAIGen() {
   border-radius: 4px;
   font-size: 0.875rem;
   cursor: pointer;
+  transition: transform 0.2s;
 }
 
 .btn-danger {
   background: #e74c3c;
+}
+
+.btn-study {
+  background: #22c55e;
 }
 
 .loading, .empty-state {
@@ -487,6 +494,9 @@ async function confirmAIGen() {
 }
 
 .deck-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   background: white;
   border-radius: 8px;
   padding: 1.5rem;
@@ -535,6 +545,14 @@ async function confirmAIGen() {
   margin: 1rem 0 0 0;
 }
 
+.hint {
+  display: block;
+  margin: 0.25rem 0 0.5rem 0;
+  color: #999;
+  font-size: 0.875rem;
+  line-height: 1.15;
+}
+
 .modal .modal-overlay {
   position: fixed;
   top: 0;
@@ -552,7 +570,7 @@ async function confirmAIGen() {
   background: #fff;
   padding: 1.5rem;
   border-radius: 8px;
-  width: 420px;
+  width: 600px;
   max-width: 90vw;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }

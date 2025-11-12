@@ -15,13 +15,19 @@ function createWindow() {
 
   const mainWindow = new BrowserWindow({
     width: 1200,
-    height: 800,
+    height: 900,
     icon: iconPath,
+    show: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.cjs')
     }
+  })
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.maximize()
+    mainWindow.show()
   })
 
   if (isDev) {
