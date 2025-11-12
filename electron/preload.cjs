@@ -20,3 +20,13 @@ contextBridge.exposeInMainWorld('cardAPI', {
   getImageData: (imagePath) => ipcRenderer.invoke('card:getImageData', imagePath)
 })
 
+contextBridge.exposeInMainWorld('settingsAPI', {
+  getAll: () => ipcRenderer.invoke('settings:getAll'),
+  get: (key) => ipcRenderer.invoke('settings:get', key),
+  set: (key, value) => ipcRenderer.invoke('settings:set', key, value)
+})
+
+contextBridge.exposeInMainWorld('aiAPI', {
+  generateDeck: (options) => ipcRenderer.invoke('ai:generateDeck', options)
+})
+

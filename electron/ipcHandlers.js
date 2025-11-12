@@ -1,6 +1,8 @@
 import { ipcMain, shell } from 'electron'
 import * as deckManager from './modules/deckManager.js'
 import * as cardManager from './modules/cardManager.js'
+import * as settingsManager from './modules/settingsManager.js'
+import { generateDeckData } from './modules/aiGenerator.js'
 
 export function registerIpcHandlers() {
   ipcMain.handle('deck:getDirectory', async () => {
@@ -126,6 +128,46 @@ export function registerIpcHandlers() {
       return { success: true }
     } catch (error) {
       throw new Error(`Failed to open decks directory: ${error.message}`)
+    }
+  })
+
+  ipcMain.handle('settings:getAll', async () => {
+    try {
+      return await settingsManager.getAllSettings()
+    } catch (error) {
+      throw new Error(`Failed to get settings: ${error.message}`)
+    }
+  })
+
+  ipcMain.handle('settings:get', async (event, key) => {
+    try {
+      return await settingsManager.getSetting(key)
+    } catch (error) {
+      throw new Error(`Failed to get setting: ${error.message}`)
+    }
+  })
+
+  ipcMain.handle('settings:set', async (event, key, value) => {
+    try {
+      return await settingsManager.setSetting(key, value)
+    } catch (error) {
+      throw new Error(`Failed to save setting: ${error.message}`)
+    }
+  })
+
+  ipcMain.handle('ai:generateDeck', async (event, options) => {
+    try {
+      const { instructions, numCards, deckName: explicitName, description: explicitDesc, cardType } = options || {}
+      const ai = await generateDeckData(instructions, numCards)
+      const deckName = explicitName && String(explicitName).trim() ? String(explicitName).trim() : ai.deckName
+      const description = explicitDesc && String(explicitDesc).trim() ? String(explicitDesc).trim() : ai.description
+      const deck = await deckManager.createDeck(deckName, description)
+      for (const c of ai.cards) {
+        await cardManager.createCard(deck.path, c.front, c.back, null, cardType || 'default')
+      }
+      return await deckManager.getDeck(deck.folderName)
+    } catch (error) {
+      throw new Error(`Failed to generate deck: ${error.message}`)
     }
   })
 }

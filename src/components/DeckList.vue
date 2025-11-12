@@ -7,6 +7,10 @@
           <span class="icon" aria-hidden="true">⚡</span>
           Quick Play
         </button>
+        <button @click="openAIGen" class="btn-secondary">
+          <span class="icon" aria-hidden="true">🤖</span>
+          Generate with AI
+        </button>
         <button @click="openDecksFolder" class="btn-secondary">
           <span class="icon" aria-hidden="true">📂</span>
           Open Folder
@@ -17,7 +21,77 @@
       </div>
     </div>
 
-    <div v-if="showQuickPlay" class="quickplay-modal">
+    <div v-if="aiGenerating" class="blocking-overlay" aria-live="polite" aria-busy="true">
+      <div class="blocking-content">
+        <div class="spinner" aria-hidden="true"></div>
+        <h3>Generating deck…</h3>
+        <p>This may take a few seconds. Please wait.</p>
+      </div>
+    </div>
+
+    <div v-if="showAIGen" class="modal">
+      <div class="modal-overlay" @click="cancelAIGen"></div>
+      <div class="modal-content">
+        <h3>Generate with AI</h3>
+        <div class="modal-row">
+          <label class="label">Instructions</label>
+          <textarea
+            v-model="aiInstructions"
+            class="input"
+            rows="4"
+            placeholder="e.g., Create flashcards to learn the basics of photosynthesis for high school level"
+          ></textarea>
+        </div>
+        <div class="modal-row">
+          <label class="label">Number of Cards</label>
+          <input
+            v-model.number="aiNumCards"
+            type="number"
+            min="1"
+            max="50"
+            step="1"
+            class="input"
+            placeholder="10"
+          />
+        </div>
+        <div class="modal-row">
+          <label class="label">Card Type</label>
+          <select v-model="aiCardType" class="input">
+            <option value="default">Default</option>
+            <option value="input">Input</option>
+          </select>
+        </div>
+        <div class="modal-row">
+          <label class="label">Deck Name (optional)</label>
+          <input
+            v-model="aiDeckName"
+            type="text"
+            class="input"
+            placeholder="AI Generated Deck"
+          />
+        </div>
+        <div class="modal-row">
+          <label class="label">Description (optional)</label>
+          <input
+            v-model="aiDescription"
+            type="text"
+            class="input"
+            placeholder="Short description"
+          />
+        </div>
+        <div class="form-actions">
+          <button @click="confirmAIGen" class="btn-primary" :disabled="aiGenerating">
+            {{ aiGenerating ? 'Generating...' : 'Generate' }}
+          </button>
+          <button @click="cancelAIGen" class="btn-secondary" :disabled="aiGenerating">Cancel</button>
+        </div>
+        <div class="modal-row">
+          <p v-if="aiError" class="error">{{ aiError }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showQuickPlay" class="modal">
       <div class="modal-overlay" @click="cancelQuickPlay"></div>
       <div class="modal-content">
         <h3>Quick Play</h3>
@@ -118,6 +192,7 @@ const decks = ref([])
 const loading = ref(true)
 const showCreateForm = ref(false)
 const showQuickPlay = ref(false)
+const showAIGen = ref(false)
 const newDeckName = ref('')
 const newDeckDescription = ref('')
 const error = ref('')
@@ -127,6 +202,14 @@ const qpSubject = ref('numbers-to-sino-korean')
 const qpCardType = ref('input')
 const qpNumCards = ref(10)
 const qpError = ref('')
+
+const aiInstructions = ref('')
+const aiNumCards = ref(10)
+const aiDeckName = ref('')
+const aiDescription = ref('')
+const aiError = ref('')
+const aiGenerating = ref(false)
+const aiCardType = ref('default')
 
 onMounted(async () => {
   await loadDecks()
@@ -224,6 +307,69 @@ function confirmQuickPlay() {
   }
   showQuickPlay.value = false
   emit('quick-play', options)
+}
+
+function openAIGen() {
+  showAIGen.value = true
+  aiError.value = ''
+}
+
+function cancelAIGen() {
+  if (aiGenerating.value) return
+  showAIGen.value = false
+  aiInstructions.value = ''
+  aiDeckName.value = ''
+  aiDescription.value = ''
+  aiNumCards.value = 10
+  aiError.value = ''
+  aiCardType.value = 'default'
+}
+
+async function confirmAIGen() {
+  if (!aiInstructions.value.trim()) {
+    aiError.value = 'Enter instructions for the AI'
+    return
+  }
+
+  const proposed = aiDeckName.value.trim()
+  if (proposed) {
+    const folderName = proposed.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    try {
+      const currentDecks = await window.deckAPI.listDecks()
+      const exists = currentDecks.some(d => d.folderName === folderName)
+      if (exists) {
+        aiError.value = 'A deck with this name already exists'
+        return
+      }
+    } catch {}
+  }
+
+  const key = await window.settingsAPI.get('DEEPSEEK_API_KEY').catch(() => null)
+  if (!key || typeof key !== 'string' || !key.trim()) {
+    aiError.value = 'Set your DEEPSEEK_API_KEY in Settings (top-right)'
+    return
+  }
+  
+  aiError.value = ''
+  aiGenerating.value = true
+  try {
+    const createdDeck = await window.aiAPI.generateDeck({
+      instructions: aiInstructions.value.trim(),
+      numCards: aiNumCards.value,
+      deckName: aiDeckName.value.trim() || undefined,
+      description: aiDescription.value.trim() || undefined,
+      cardType: aiCardType.value
+    })
+    await loadDecks()
+    cancelAIGen()
+    if (createdDeck) {
+      emit('open-deck', createdDeck)
+    }
+  } catch (err) {
+    aiError.value = err?.message || 'Failed to generate deck'
+  } finally {
+    aiGenerating.value = false
+  }
 }
 </script>
 
@@ -389,7 +535,7 @@ function confirmQuickPlay() {
   margin: 1rem 0 0 0;
 }
 
-.quickplay-modal .modal-overlay {
+.modal .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -398,7 +544,7 @@ function confirmQuickPlay() {
   background: rgba(0, 0, 0, 0.5);
 }
 
-.quickplay-modal .modal-content {
+.modal .modal-content {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -411,20 +557,68 @@ function confirmQuickPlay() {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-.quickplay-modal h3 {
+.modal h3 {
   margin: 0 0 1rem 0;
   color: #333;
 }
 
-.quickplay-modal .label {
+.modal .label {
   display: block;
   margin-bottom: 0.5rem;
   color: #555;
   font-weight: 600;
 }
 
-.quickplay-modal .modal-row {
+.modal .modal-row {
   margin-bottom: 1rem;
+}
+
+.blocking-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+.blocking-content {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  text-align: center;
+  color: #374151;
+  width: 360px;
+  max-width: calc(100% - 2rem);
+}
+
+.blocking-content h3 {
+  margin: 0.75rem 0 0.25rem 0;
+}
+
+.blocking-content p {
+  margin: 0;
+  color: #6b7280;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
 

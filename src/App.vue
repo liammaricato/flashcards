@@ -1,5 +1,6 @@
 <template>
   <div class="app">
+    <button @click="showSettings = true" class="settings-btn" aria-label="Open settings">⚙</button>
     <header v-if="currentView !== 'study'">
       <h1>Flashcards</h1>
       <p>Your study companion</p>
@@ -23,6 +24,7 @@
         @exit="exitStudy"
       />
     </main>
+    <SettingsModal v-if="showSettings" @close="onCloseSettings" />
   </div>
 </template>
 
@@ -31,12 +33,14 @@ import { ref } from 'vue'
 import DeckList from './components/DeckList.vue'
 import CardView from './components/CardView.vue'
 import StudyMode from './components/StudyMode.vue'
+import SettingsModal from './components/SettingsModal.vue'
 import { createQuickPlaySession } from './services/quickPlay.js'
 
 const currentDeck = ref(null)
 const inQuickPlay = ref(false)
 const studyCards = ref([])
 const currentView = ref('list')
+const showSettings = ref(false)
 
 function openDeck(deck) {
   currentDeck.value = deck
@@ -91,6 +95,10 @@ function shuffleArray(array) {
   }
   return shuffled
 }
+
+function onCloseSettings() {
+  showSettings.value = false
+}
 </script>
 
 <style scoped>
@@ -116,6 +124,30 @@ header h1 {
 header p {
   margin: 0.5rem 0 0 0;
   opacity: 0.9;
+}
+
+.settings-btn {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  font-weight: 900;
+  -webkit-text-stroke: 0.6px currentColor;
+  line-height: 1;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.9);
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  cursor: pointer;
+}
+.settings-btn:hover {
+  background: #ffffff;
 }
 
 main {
