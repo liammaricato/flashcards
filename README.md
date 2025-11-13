@@ -116,8 +116,7 @@ These sessions focus on creating randomized study cards, perfect for studying th
 
 > Generated sessions are ephemeral and not written to disk.
 
-## Screenshots (placeholders)
-Add screenshots under `docs/screenshots/` and update these paths.
+## Screenshots
 
 #### Deck list
 ![Deck List](docs/screenshots/deck_list.png)
