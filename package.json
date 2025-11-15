@@ -22,6 +22,10 @@
   "build": {
     "appId": "com.suricatoo.flashcards",
     "productName": "Flashcards",
+    "mac": {
+      "icon": "build/icon-v2.png",
+      "category": "public.app-category.education"
+    },
     "win": { "icon": "build/favicon.ico", "target": "nsis" },
     "files": [
       "dist/**",
